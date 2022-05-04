@@ -6,7 +6,6 @@ from telebot import types
 import config
 import SDapi
 
-#There DB funcion
 
 bot = telebot.TeleBot(config.TG_token)
 connectDB = sqlite3.connect('tg_sg_bd.db', check_same_thread=False)
@@ -22,7 +21,7 @@ def tokenSDforUser(user_id):
 def send_welcome(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn1 = types.KeyboardButton("/registration")
-    btn2 = types.KeyboardButton("Списокмоихоткрытыхзаявок")
+    btn2 = types.KeyboardButton("Список моих открытых заявок")
     markup.add(btn1, btn2)
     bot.send_message(message.chat.id, text="""\
     Привет {0.first_name}!\
@@ -48,8 +47,17 @@ def add_SDapi(message):
 @bot.message_handler(func=lambda message: True)
 def message_processing(message):
     if message.text == 'Список моих открытых заявок':
-        SDapi.my_open_request(tokenSDforUser(message.from_user.id))
-        bot.reply_to(message, f" {tokenSDforUser(message.from_user.id), message.from_user.id}" )
+        SD_open_requests = SDapi.my_open_request(tokenSDforUser(message.from_user.id))
+        markup = telebot.types.InlineKeyboardMarkup()
+
+        for i in range(len(SD_open_requests)):
+            markup.add(telebot.types.InlineKeyboardButton(text=f'{SD_open_requests[i][0]} : {SD_open_requests[i][2]}', callback_data=f"{SD_open_requests[i][0]}"))
+        bot.send_message(message.chat.id, "Открытые заяки helpdesk",reply_markup=markup )
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback(call):
+    if call.message:
+            bot.send_message(call.message.chat.id, f'{call.message}')
 
 
 bot.infinity_polling()
